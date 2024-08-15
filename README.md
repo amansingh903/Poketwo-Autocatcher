@@ -1,1 +1,1 @@
-A simple Poketwo Autocatcher made in python.
+A free Pokétwo Autocatcher made in python for simple and easy deployment.
