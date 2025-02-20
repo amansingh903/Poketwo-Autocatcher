@@ -29,7 +29,7 @@ async def spam():
 async def on_ready():
     print(f'\033[91mLOGGED IN AS {bot.user.name} ({bot.user.id})\033[0m')
     print(f'\033[91mSERVER STATUS: ONLINE\033[0m')
-    print(f'\033[91mMade by who.mee\033[0m')
+    print(f'\033[91mMade by amansingh903\033[0m')
     print(f'\033[91m------------------------------------------------------------------------------------------\033[0m')
     #spam function
     if config.SpamId:
