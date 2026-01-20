@@ -1,2 +1,6 @@
 discord.py-self
 asyncio
+torch
+torchvision
+Pillow
+aiohttp
