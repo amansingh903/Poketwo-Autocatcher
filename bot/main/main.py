@@ -131,7 +131,7 @@ async def on_message(msg: discord.Message):
             if cleaned_hint.endswith('.'):
                 cleaned_hint = cleaned_hint[:-1]
 
-            with open('data.txt', 'r', encoding='utf-8') as file:
+            with open('bot\data.txt', 'r', encoding='utf-8') as file:
                 for line in file:
                     pokemon_from_file = line.strip()
                     if re.fullmatch(cleaned_hint, pokemon_from_file, re.IGNORECASE):
@@ -159,3 +159,4 @@ async def on_message(msg: discord.Message):
         pass
 
 bot.run(config.token)
+
