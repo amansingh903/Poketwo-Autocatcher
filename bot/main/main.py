@@ -16,13 +16,13 @@ import aiohttp
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load names and model
-with open('class_names.json', 'r') as f:
+with open('bot\class_names.json', 'r') as f:
     class_names = json.load(f)
 
 model = models.mobilenet_v3_small()
 num_ftrs = model.classifier[3].in_features
 model.classifier[3] = nn.Linear(num_ftrs, len(class_names))
-model.load_state_dict(torch.load('pokemon_model_lite.pth', map_location=device))
+model.load_state_dict(torch.load('bot\pokemon_model_lite.pth', map_location=device))
 model.to(device)
 model.eval()
 
@@ -50,7 +50,7 @@ async def spam():
 async def on_ready():
     print(f'\033[91mLOGGED IN AS {bot.user.name} ({bot.user.id})\033[0m')
     print(f'\033[91mSERVER STATUS: ONLINE\033[0m')
-    print(f'\033[91mMade by amansingh903\033[0m')
+    print(f'\033[91mMade by https://github.com/amansingh903\033[0m')
     print(f'\033[91m------------------------------------------------------------------------------------------\033[0m')
     if config.SpamId:
         await spam()
