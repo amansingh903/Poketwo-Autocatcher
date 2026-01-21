@@ -109,17 +109,9 @@ async def on_message(msg: discord.Message):
                             _, idx = torch.max(probs, 1)
                         
                         pokemon_name = class_names[idx.item()]
-                        # List of suffixes to be removed
-                        suffixes_to_strip = ["-female", "-male", "-normal", "-origin", "-altered", "-average"]
-
-                        clean_name = pokemon_name
-                        for suffix in suffixes_to_strip:
-                            if clean_name.endswith(suffix):
-                                clean_name = clean_name.replace(suffix, "")
                         random_interval = random.uniform(0.5, 2)
                         await asyncio.sleep(random_interval)
-                        await msg.channel.send(f'<@716390085896962058> c {clean_name}')
-                        print(f"Caught {clean_name}")
+                        await msg.channel.send(f'<@716390085896962058> c {pokemon_name}')
 
                     except Exception as e:
                         print(f"Error processing image: {e}")
@@ -139,10 +131,26 @@ async def on_message(msg: discord.Message):
                         print(f'Caught via hint: {pokemon_from_file}')
                         break
 
+
+        # logging
+        if msg.content.startswith('Congratulations') and msg.author.id == 716390085896962058:
+            match = re.search(r"Level\s+\d+\s+([A-Za-z\-\s]+?)(?=<|\s+\()", msg.content)
+            if match:
+                pokemon_name = match.group(1)
+                print(f'Caught {pokemon_name}')
+        
+
         # captcha function
         if msg.content.startswith('Please tell us') and msg.author.id == 716390085896962058:
             sleeping = True
             print('\033[91mCaptcha Found - Spammer Stopped\033[0m')
+        
+
+        # fallback to hint incase of incorrect guess
+        if msg.content.startswith('That is the wrong') and msg.author.id == 716390085896962058:
+            print(f"Incorrect guess, falling back to hint")
+            await msg.channel.send(f'<@716390085896962058> h')
+
 
         # react function
         if msg.author.id == config.OwnerId and msg.guild.id == config.GuildId:
