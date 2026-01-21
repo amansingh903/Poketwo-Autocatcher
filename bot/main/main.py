@@ -16,13 +16,13 @@ import aiohttp
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load names and model
-with open('bot\class_names.json', 'r') as f:
+with open('bot/class_names.json', 'r') as f:
     class_names = json.load(f)
 
 model = models.mobilenet_v3_small()
 num_ftrs = model.classifier[3].in_features
 model.classifier[3] = nn.Linear(num_ftrs, len(class_names))
-model.load_state_dict(torch.load('bot\pokemon_model_lite.pth', map_location=device))
+model.load_state_dict(torch.load(r'bot\pokemon_model_lite.pth', map_location=device))
 model.to(device)
 model.eval()
 
@@ -131,7 +131,7 @@ async def on_message(msg: discord.Message):
             if cleaned_hint.endswith('.'):
                 cleaned_hint = cleaned_hint[:-1]
 
-            with open('bot\data.txt', 'r', encoding='utf-8') as file:
+            with open('bot/data.txt', 'r', encoding='utf-8') as file:
                 for line in file:
                     pokemon_from_file = line.strip()
                     if re.fullmatch(cleaned_hint, pokemon_from_file, re.IGNORECASE):
@@ -159,4 +159,3 @@ async def on_message(msg: discord.Message):
         pass
 
 bot.run(config.token)
-
