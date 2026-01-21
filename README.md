@@ -11,13 +11,6 @@ This is a simple Discord self-bot designed to catch Pokémon on Poketwo 24/7 so 
 
 ---
 
-###  Built With
-* **Language:** Python
-* **APIs:** Discord.py-self / Pycord
-* **Infrastructure:** Deployed on AWS EC2 for 24/7 uptime
-
----
-
 ###  Quick Start
 1.  **Clone the Repo:**
     ```bash
