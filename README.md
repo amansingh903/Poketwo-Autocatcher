@@ -1,5 +1,6 @@
 #  Poketwo Autocatcher
 This is a simple Discord self-bot designed to catch Pokémon on Poketwo 24/7 so you don't have to.
+Use main for catching via hints, and beta for catching via AI
 
 ---
 
