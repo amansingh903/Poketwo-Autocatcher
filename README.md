@@ -1,6 +1,7 @@
 # Poketwo Autocatcher
 Discord self-bot for Poketwo with AI-based image prediction, hint fallback, cooldown guards, and runtime safety controls.
 
+
 ## Features
 - AI catch predictions with configurable confidence threshold.
 - Automatic fallback to hint requests when confidence is low or AI processing fails.
@@ -27,7 +28,32 @@ git clone -b beta-with-ai https://github.com/amansingh903/Poketwo-Autocatcher.gi
 cd Poketwo-Autocatcher
 ```
 
-### 2. Run the setup script for your platform
+
+### 2. Configure environment variables
+
+Update the .env file in the bot folder.
+
+#### Required
+| Variable | Description |
+|---|---|
+| `DISCORD_TOKEN` | Your user token |
+| `GUILD_ID` | Guild/server where the bot should operate |
+
+#### Optional
+| Variable | Default | Description |
+|---|---|---|
+| `OWNER_ID` | — | Discord user ID allowed to run owner commands |
+| `CATCH_CHANNEL_ID` | — | Channel ID used by hint solver fallback |
+| `SPAM_CHANNEL_ID` | — | Channel used by spam loop |
+| `CATCH_ENABLED` | `true` | Enable/disable catch flow |
+| `SPAM_ENABLED` | `true` | Enable/disable spam loop |
+| `START_SLEEPING` | `false` | Start in paused/sleeping mode |
+| `AI_CONFIDENCE_THRESHOLD` | `0.72` | Confidence threshold `(0, 1]` |
+| `CATCH_COOLDOWN_SECONDS` | `1.2` | Must be `> 0` |
+| `HINT_COOLDOWN_SECONDS` | `1.0` | Must be `> 0` |
+| `STATE_FILE_PATH` | `bot/runtime_state.json` | Path for persisted runtime state |
+
+### 3. Run the setup script for your platform
 
 The scripts auto-detect your Python 3.12 interpreter, create a virtual environment, and install all dependencies.
 
@@ -51,29 +77,6 @@ pip install -r bot/main/requirements.txt
 ```
 </details>
 
-### 3. Configure environment variables
-
-Create a `.env` file in the repo root (or export the variables in your shell).
-
-#### Required
-| Variable | Description |
-|---|---|
-| `DISCORD_TOKEN` | Your user token |
-| `GUILD_ID` | Guild/server where the bot should operate |
-
-#### Optional
-| Variable | Default | Description |
-|---|---|---|
-| `OWNER_ID` | — | Discord user ID allowed to run owner commands |
-| `CATCH_CHANNEL_ID` | — | Channel ID used by hint solver fallback |
-| `SPAM_CHANNEL_ID` | — | Channel used by spam loop |
-| `CATCH_ENABLED` | `true` | Enable/disable catch flow |
-| `SPAM_ENABLED` | `true` | Enable/disable spam loop |
-| `START_SLEEPING` | `false` | Start in paused/sleeping mode |
-| `AI_CONFIDENCE_THRESHOLD` | `0.72` | Confidence threshold `(0, 1]` |
-| `CATCH_COOLDOWN_SECONDS` | `1.2` | Must be `> 0` |
-| `HINT_COOLDOWN_SECONDS` | `1.0` | Must be `> 0` |
-| `STATE_FILE_PATH` | `bot/runtime_state.json` | Path for persisted runtime state |
 
 ### 4. Activate the environment and launch
 
