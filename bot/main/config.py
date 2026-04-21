@@ -1,4 +1,30 @@
 import os
+from pathlib import Path
+
+
+def _load_dotenv() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    candidate_paths = [
+        repo_root / ".env",
+        repo_root / "bot" / ".env",
+        Path(__file__).resolve().parent / ".env",
+    ]
+
+    for env_path in candidate_paths:
+        if not env_path.exists():
+            continue
+        for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip("'\"")
+            if key and key not in os.environ:
+                os.environ[key] = value
+
+
+_load_dotenv()
 
 
 def _required_str(name: str) -> str:
@@ -51,11 +77,13 @@ def _optional_positive_float(name: str, default: float) -> float:
 
 
 token = _required_str("DISCORD_TOKEN")
-OwnerId = _required_int("OWNER_ID")
+OwnerId = _optional_int("OWNER_ID")
 GuildId = _required_int("GUILD_ID")
 SpamId = _optional_int("SPAM_CHANNEL_ID")
-CatchId = _required_int("CATCH_CHANNEL_ID")
+CatchId = _optional_int("CATCH_CHANNEL_ID")
 sleep = _optional_bool("START_SLEEPING", default=False)
+CatchEnabled = _optional_bool("CATCH_ENABLED", default=True)
+SpamEnabled = _optional_bool("SPAM_ENABLED", default=True)
 AiConfidenceThreshold = _optional_float("AI_CONFIDENCE_THRESHOLD", default=0.72)
 CatchCooldownSeconds = _optional_positive_float("CATCH_COOLDOWN_SECONDS", default=1.2)
 HintCooldownSeconds = _optional_positive_float("HINT_COOLDOWN_SECONDS", default=1.0)

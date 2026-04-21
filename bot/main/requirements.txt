@@ -1,5 +1,5 @@
 discord.py-self==2.0.1
 aiohttp==3.10.11
-Pillow==10.4.0
-torch==2.4.1
-torchvision==0.19.1
+Pillow
+torch
+torchvision

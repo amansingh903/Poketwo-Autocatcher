@@ -49,6 +49,8 @@ spam_task = None
 BOT_AUTHOR_ID = 716390085896962058
 http_session = None
 STATE_PATH = Path(config.StateFilePath)
+catch_enabled = config.CatchEnabled
+spam_enabled = config.SpamEnabled
 last_catch_attempt_ts = 0.0
 last_hint_request_ts = 0.0
 last_captcha_ts = None
@@ -62,13 +64,15 @@ with open('bot/data.txt', 'r', encoding='utf-8') as file:
 
 
 def load_runtime_state() -> None:
-    global sleeping, last_captcha_ts, last_caught_name
+    global sleeping, catch_enabled, spam_enabled, last_captcha_ts, last_caught_name
     if not STATE_PATH.exists():
         return
     try:
         with open(STATE_PATH, "r", encoding="utf-8") as state_file:
             state = json.load(state_file)
         sleeping = bool(state.get("sleeping", sleeping))
+        catch_enabled = bool(state.get("catch_enabled", catch_enabled))
+        spam_enabled = bool(state.get("spam_enabled", spam_enabled))
         last_captcha_ts = state.get("last_captcha_ts")
         last_caught_name = state.get("last_caught_name")
         logger.info("Loaded runtime state from %s", STATE_PATH)
@@ -79,6 +83,8 @@ def load_runtime_state() -> None:
 def save_runtime_state() -> None:
     state = {
         "sleeping": sleeping,
+        "catch_enabled": catch_enabled,
+        "spam_enabled": spam_enabled,
         "last_captcha_ts": last_captcha_ts,
         "last_caught_name": last_caught_name,
     }
@@ -146,7 +152,7 @@ async def get_http_session() -> aiohttp.ClientSession:
 
 async def spam():
     global sleeping
-    while not sleeping:
+    while not sleeping and spam_enabled:
         channel = bot.get_channel(config.SpamId)
         if channel:
             result = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=13))
@@ -156,7 +162,7 @@ async def spam():
 
 
 def in_owner_scope(msg: discord.Message) -> bool:
-    return bool(msg.guild and msg.author.id == config.OwnerId and msg.guild.id == config.GuildId)
+    return bool(config.OwnerId and msg.guild and msg.author.id == config.OwnerId and msg.guild.id == config.GuildId)
 
 
 def should_process_guild_message(msg: discord.Message) -> bool:
@@ -165,7 +171,7 @@ def should_process_guild_message(msg: discord.Message) -> bool:
 
 def ensure_spam_task() -> None:
     global spam_task
-    if config.SpamId and not sleeping and (spam_task is None or spam_task.done()):
+    if config.SpamId and spam_enabled and not sleeping and (spam_task is None or spam_task.done()):
         spam_task = asyncio.create_task(spam())
         logger.info("Spammer task started.")
 
@@ -193,7 +199,7 @@ async def on_disconnect():
 
 @bot.event
 async def on_message(msg: discord.Message):
-    global sleeping, last_captcha_ts, last_caught_name
+    global sleeping, catch_enabled, spam_enabled, spam_task, last_captcha_ts, last_caught_name
 
     if msg.author.id == bot.user.id:
         return
@@ -227,8 +233,23 @@ async def on_message(msg: discord.Message):
                 save_runtime_state()
                 ensure_spam_task()
 
+        if in_owner_scope(msg) and message == "!togglecatch":
+            catch_enabled = not catch_enabled
+            save_runtime_state()
+            await msg.channel.send(f"Catch is now {'enabled' if catch_enabled else 'disabled'}.")
+
+        if in_owner_scope(msg) and message == "!togglespam":
+            spam_enabled = not spam_enabled
+            save_runtime_state()
+            if spam_enabled:
+                ensure_spam_task()
+            elif spam_task and not spam_task.done():
+                spam_task.cancel()
+                spam_task = None
+            await msg.channel.send(f"Spam is now {'enabled' if spam_enabled else 'disabled'}.")
+
         # Try with ai
-        if msg.author.id == BOT_AUTHOR_ID:
+        if catch_enabled and config.CatchId and msg.channel.id == config.CatchId and msg.author.id == BOT_AUTHOR_ID:
             if len(msg.embeds) > 0:
                 embed = msg.embeds[0]
                 dictio = embed.to_dict()
@@ -285,7 +306,7 @@ async def on_message(msg: discord.Message):
                         )
 
         # catch function if ai fails (Hint Solving)
-        if msg.content.startswith('The pokémon is ') and msg.channel.id == config.CatchId:
+        if catch_enabled and config.CatchId and msg.content.startswith('The pokémon is ') and msg.channel.id == config.CatchId:
             cleaned_hint = msg.content.replace('The pokémon is ', '').replace('\\', '').replace('_', '.')
             if cleaned_hint.endswith('.'):
                 cleaned_hint = cleaned_hint[:-1]
@@ -294,16 +315,16 @@ async def on_message(msg: discord.Message):
                 if re.fullmatch(cleaned_hint, pokemon_from_file, re.IGNORECASE):
                     await send_with_cooldown(
                         msg.channel,
-                        f'c {pokemon_from_file}',
+                        f'<@{BOT_AUTHOR_ID}> c {pokemon_from_file}',
                         config.CatchCooldownSeconds,
                         "catch",
                     )
-                    logger.info('Caught via hint: %s', pokemon_from_file)
+                    logger.info('Catching via hint: %s', pokemon_from_file)
                     break
 
 
         # logging
-        if msg.content.startswith('Congratulations') and msg.author.id == BOT_AUTHOR_ID:
+        if config.CatchId and msg.channel.id == config.CatchId and msg.content.startswith('Congratulations') and msg.author.id == BOT_AUTHOR_ID:
             match = re.search(r"Level\s+\d+\s+([A-Za-z\-\s]+?)(?=<|\s+\()", msg.content)
             if match:
                 pokemon_name = match.group(1)
@@ -313,7 +334,7 @@ async def on_message(msg: discord.Message):
         
 
         # captcha function
-        if msg.content.startswith('Please tell us') and msg.author.id == BOT_AUTHOR_ID:
+        if config.CatchId and msg.channel.id == config.CatchId and msg.content.startswith('Please tell us') and msg.author.id == BOT_AUTHOR_ID:
             sleeping = True
             last_captcha_ts = datetime.now(timezone.utc).isoformat()
             save_runtime_state()
@@ -321,7 +342,7 @@ async def on_message(msg: discord.Message):
         
 
         # fallback to hint incase of incorrect guess
-        if msg.content.startswith('That is the wrong') and msg.author.id == BOT_AUTHOR_ID:
+        if catch_enabled and config.CatchId and msg.channel.id == config.CatchId and msg.content.startswith('That is the wrong') and msg.author.id == BOT_AUTHOR_ID:
             logger.info("Incorrect guess, falling back to hint")
             await send_with_cooldown(
                 msg.channel,

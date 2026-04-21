@@ -1,2 +1,7 @@
 __pycache__/
 *.py[cod]
+.env
+.venv/
+bot/.venv/
+bot/.env
+bot/runtime_state.json
