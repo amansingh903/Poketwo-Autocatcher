@@ -31,6 +31,10 @@ This is a simple Discord self-bot designed to catch Pokémon on Poketwo 24/7 so 
     - `CATCH_CHANNEL_ID` (required)
     - `SPAM_CHANNEL_ID` (optional)
     - `START_SLEEPING` (optional, default `false`)
+    - `AI_CONFIDENCE_THRESHOLD` (optional, default `0.72`)
+    - `CATCH_COOLDOWN_SECONDS` (optional, default `1.2`)
+    - `HINT_COOLDOWN_SECONDS` (optional, default `1.0`)
+    - `STATE_FILE_PATH` (optional, default `bot/runtime_state.json`)
 4.  **Launch:**
     ```bash
     python main.py
