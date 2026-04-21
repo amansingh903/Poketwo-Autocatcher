@@ -1,9 +1,7 @@
 # Poketwo Autocatcher
-
 Discord self-bot for Poketwo with AI-based image prediction, hint fallback, cooldown guards, and runtime safety controls.
 
 ## Features
-
 - AI catch predictions with configurable confidence threshold.
 - Automatic fallback to hint requests when confidence is low or AI processing fails.
 - Regex hint solver using local Pokemon name data.
@@ -12,7 +10,6 @@ Discord self-bot for Poketwo with AI-based image prediction, hint fallback, cool
 - Owner controls: `!say`, `!react`, and `!solved`.
 
 ## Project layout
-
 - `bot/main/main.py` - Main runtime and event handlers.
 - `bot/main/config.py` - Environment-based configuration loader.
 - `bot/main/requirements.txt` - Pinned Python dependencies.
@@ -22,64 +19,91 @@ Discord self-bot for Poketwo with AI-based image prediction, hint fallback, cool
 
 ## Quick start
 
-1. Clone:
+> **Requires Python 3.12.** Download from [python.org](https://www.python.org/downloads/) if not already installed.
 
+### 1. Clone the repo
 ```bash
 git clone -b beta-with-ai https://github.com/amansingh903/Poketwo-Autocatcher.git
 cd Poketwo-Autocatcher
 ```
 
-2. Install dependencies (Python 3.12 only):
+### 2. Run the setup script for your platform
+
+The scripts auto-detect your Python 3.12 interpreter, create a virtual environment, and install all dependencies.
+
+| Platform | Command |
+|---|---|
+| **Linux / macOS** | `bash setup.sh` |
+| **Windows — PowerShell** | `powershell -ExecutionPolicy Bypass -File setup.ps1` |
+| **Windows — Command Prompt** | `setup.bat` |
+
+<details>
+<summary>Manual setup (any platform)</summary>
 
 ```bash
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
+# Linux / macOS
+python3.12 -m venv .venv
+source .venv/bin/activate          # Linux / macOS
+# .venv\Scripts\activate.bat       # Windows CMD
+# .venv\Scripts\Activate.ps1       # Windows PowerShell
 python -m pip install --upgrade pip
 pip install -r bot/main/requirements.txt
 ```
-This project supports Python `3.12` only.
+</details>
 
-3. Configure environment variables (or a `.env` file in repo root).
+### 3. Configure environment variables
 
-### Required
+Create a `.env` file in the repo root (or export the variables in your shell).
 
-- `DISCORD_TOKEN` - your user token.
-- `GUILD_ID` - Guild/server where the bot should operate.
+#### Required
+| Variable | Description |
+|---|---|
+| `DISCORD_TOKEN` | Your user token |
+| `GUILD_ID` | Guild/server where the bot should operate |
 
-### Optional
+#### Optional
+| Variable | Default | Description |
+|---|---|---|
+| `OWNER_ID` | — | Discord user ID allowed to run owner commands |
+| `CATCH_CHANNEL_ID` | — | Channel ID used by hint solver fallback |
+| `SPAM_CHANNEL_ID` | — | Channel used by spam loop |
+| `CATCH_ENABLED` | `true` | Enable/disable catch flow |
+| `SPAM_ENABLED` | `true` | Enable/disable spam loop |
+| `START_SLEEPING` | `false` | Start in paused/sleeping mode |
+| `AI_CONFIDENCE_THRESHOLD` | `0.72` | Confidence threshold `(0, 1]` |
+| `CATCH_COOLDOWN_SECONDS` | `1.2` | Must be `> 0` |
+| `HINT_COOLDOWN_SECONDS` | `1.0` | Must be `> 0` |
+| `STATE_FILE_PATH` | `bot/runtime_state.json` | Path for persisted runtime state |
 
-- `OWNER_ID` - Discord user ID allowed to run owner commands (`!say`, `!react`, `!solved`).
-- `CATCH_CHANNEL_ID` - Channel ID used by hint solver fallback.
-- `SPAM_CHANNEL_ID` - Channel used by spam loop.
-- `CATCH_ENABLED` - `true/false`, default `true`.
-- `SPAM_ENABLED` - `true/false`, default `true`.
-- `START_SLEEPING` - `true/false`, default `false`.
-- `AI_CONFIDENCE_THRESHOLD` - default `0.72`, range `(0, 1]`.
-- `CATCH_COOLDOWN_SECONDS` - default `1.2`, must be `> 0`.
-- `HINT_COOLDOWN_SECONDS` - default `1.0`, must be `> 0`.
-- `STATE_FILE_PATH` - default `bot/runtime_state.json`.
-
-
-
-4. Launch:
+### 4. Activate the environment and launch
 
 ```bash
+# Linux / macOS
+source .venv/bin/activate
+python bot/main/main.py
+
+# Windows CMD
+.venv\Scripts\activate.bat
+python bot/main/main.py
+
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
 python bot/main/main.py
 ```
 
 ## Commands
-
-- `!say <text>` - Send a message from your account.
-- `!react <message_id> <emoji>` - React to a message in the current channel.
-- `!solved` - Resume spam mode after captcha resolution.
-- `!togglecatch` - Toggle catch flow on/off.
-- `!togglespam` - Toggle spam flow on/off.
+| Command | Description |
+|---|---|
+| `!say <text>` | Send a message from your account |
+| `!react <message_id> <emoji>` | React to a message in the current channel |
+| `!solved` | Resume spam mode after captcha resolution |
+| `!togglecatch` | Toggle catch flow on/off |
+| `!togglespam` | Toggle spam flow on/off |
 
 ## Notes
-
 - The bot validates startup config and model/class compatibility.
 - Runtime state (sleeping flag, last captcha time, last caught name) is saved to `STATE_FILE_PATH`.
 - Catching only runs in `CATCH_CHANNEL_ID`, and spam only runs in `SPAM_CHANNEL_ID`.
 - If a prediction is below threshold, the bot requests a hint instead of forcing a catch.
 
-> **Disclaimer:** Self-bots violate Discord ToS. This is for educational Purposes only and use at your own risk. 
+> **Disclaimer:** Self-bots violate Discord ToS. This is for educational purposes only. Use at your own risk.
