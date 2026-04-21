@@ -36,8 +36,8 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r bot/main/requirements.txt
-
-*This project supports Python `3.12` only.
+```
+This project supports Python `3.12` only.
 
 3. Configure environment variables (or a `.env` file in repo root).
 
