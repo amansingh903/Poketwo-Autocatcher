@@ -25,7 +25,7 @@ Discord self-bot for Poketwo with AI-based image prediction, hint fallback, cool
 1. Clone:
 
 ```bash
-git clone https://github.com/amansingh903/Poketwo-Autocatcher.git
+git clone -b beta-with-ai https://github.com/amansingh903/Poketwo-Autocatcher.git
 cd Poketwo-Autocatcher
 ```
 
@@ -36,9 +36,8 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r bot/main/requirements.txt
-```
 
-This project supports Python `3.12` only.
+*This project supports Python `3.12` only.
 
 3. Configure environment variables (or a `.env` file in repo root).
 
