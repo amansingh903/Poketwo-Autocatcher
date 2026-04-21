@@ -10,7 +10,8 @@ import config
 import re
 import asyncio
 import random
-import aiohttp 
+import aiohttp
+import logging
 
 # Moel Setup
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -35,10 +36,18 @@ bot_transform = transforms.Compose([
 
 bot = commands.Bot(command_prefix="!", self_bot=True)
 sleeping = config.sleep
+spam_task = None
+BOT_AUTHOR_ID = 716390085896962058
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger(__name__)
+
+with open('bot/data.txt', 'r', encoding='utf-8') as file:
+    pokemon_names = [line.strip() for line in file if line.strip()]
 
 async def spam():
     global sleeping
-    while sleeping == False:
+    while not sleeping:
         channel = bot.get_channel(config.SpamId)
         if channel:
             result = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=13))
@@ -46,17 +55,39 @@ async def spam():
         random_interval = random.uniform(1, 4)
         await asyncio.sleep(random_interval)
 
+
+def in_owner_scope(msg: discord.Message) -> bool:
+    return bool(msg.guild and msg.author.id == config.OwnerId and msg.guild.id == config.GuildId)
+
+
+def should_process_guild_message(msg: discord.Message) -> bool:
+    return bool(msg.guild and msg.guild.id == config.GuildId)
+
+
+def ensure_spam_task() -> None:
+    global spam_task
+    if config.SpamId and not sleeping and (spam_task is None or spam_task.done()):
+        spam_task = asyncio.create_task(spam())
+        logger.info("Spammer task started.")
+
 @bot.event
 async def on_ready():
     print(f'\033[91mLOGGED IN AS {bot.user.name} ({bot.user.id})\033[0m')
     print(f'\033[91mSERVER STATUS: ONLINE\033[0m')
     print(f'\033[91mMade by https://github.com/amansingh903\033[0m')
     print(f'\033[91m------------------------------------------------------------------------------------------\033[0m')
-    if config.SpamId:
-        await spam()
+    ensure_spam_task()
 
 @bot.event
 async def on_message(msg: discord.Message):
+    global sleeping
+
+    if msg.author.id == bot.user.id:
+        return
+
+    if not should_process_guild_message(msg):
+        return
+
     # Pre-checks for images
     attachment = None
     if msg.attachments:
@@ -68,7 +99,7 @@ async def on_message(msg: discord.Message):
 
     try:
         # say function
-        if msg.author.id == config.OwnerId and msg.guild.id == config.GuildId:
+        if in_owner_scope(msg):
             if '!say' in message:
                 pattern = r'^!say (.*)'
                 msgWithoutSay = re.findall(pattern, message)
@@ -76,14 +107,14 @@ async def on_message(msg: discord.Message):
                     await msg.channel.send(f'{msgWithoutSay[0]}')
 
         # Solved captcha
-        if msg.author.id == config.OwnerId and msg.guild.id == config.GuildId:
+        if in_owner_scope(msg):
             if message == '!solved':
                 sleeping = False
-                print("Spammer resumed.")
-                await spam() # Restart spammer if it stopped
+                logger.info("Spammer resumed.")
+                ensure_spam_task()
 
         # Try with ai
-        if msg.author.id == 716390085896962058 and msg.guild.id == config.GuildId:
+        if msg.author.id == BOT_AUTHOR_ID:
             if len(msg.embeds) > 0:
                 embed = msg.embeds[0]
                 dictio = embed.to_dict()
@@ -95,7 +126,8 @@ async def on_message(msg: discord.Message):
                             img_bytes = await attachment.read()
                         elif embed.image:
                             async with aiohttp.ClientSession() as session:
-                                async with session.get(embed.image.url) as resp:
+                                async with session.get(embed.image.url, timeout=10) as resp:
+                                    resp.raise_for_status()
                                     img_bytes = await resp.read()
                         else:
                             raise ValueError("No image found")
@@ -113,8 +145,8 @@ async def on_message(msg: discord.Message):
                         await asyncio.sleep(random_interval)
                         await msg.channel.send(f'<@716390085896962058> c {pokemon_name}')
 
-                    except Exception as e:
-                        print(f"Error processing image: {e}")
+                    except (aiohttp.ClientError, asyncio.TimeoutError, ValueError, OSError) as e:
+                        logger.warning("Error processing image: %s", e)
                         await msg.channel.send(f'<@716390085896962058> h')
 
         # catch function if ai fails (Hint Solving)
@@ -123,47 +155,43 @@ async def on_message(msg: discord.Message):
             if cleaned_hint.endswith('.'):
                 cleaned_hint = cleaned_hint[:-1]
 
-            with open('bot/data.txt', 'r', encoding='utf-8') as file:
-                for line in file:
-                    pokemon_from_file = line.strip()
-                    if re.fullmatch(cleaned_hint, pokemon_from_file, re.IGNORECASE):
-                        await msg.channel.send(f'c {pokemon_from_file}')
-                        print(f'Caught via hint: {pokemon_from_file}')
-                        break
+            for pokemon_from_file in pokemon_names:
+                if re.fullmatch(cleaned_hint, pokemon_from_file, re.IGNORECASE):
+                    await msg.channel.send(f'c {pokemon_from_file}')
+                    logger.info('Caught via hint: %s', pokemon_from_file)
+                    break
 
 
         # logging
-        if msg.content.startswith('Congratulations') and msg.author.id == 716390085896962058:
+        if msg.content.startswith('Congratulations') and msg.author.id == BOT_AUTHOR_ID:
             match = re.search(r"Level\s+\d+\s+([A-Za-z\-\s]+?)(?=<|\s+\()", msg.content)
             if match:
                 pokemon_name = match.group(1)
-                print(f'Caught {pokemon_name}')
+                logger.info('Caught %s', pokemon_name)
         
 
         # captcha function
-        if msg.content.startswith('Please tell us') and msg.author.id == 716390085896962058:
+        if msg.content.startswith('Please tell us') and msg.author.id == BOT_AUTHOR_ID:
             sleeping = True
-            print('\033[91mCaptcha Found - Spammer Stopped\033[0m')
+            logger.warning('Captcha Found - Spammer Stopped')
         
 
         # fallback to hint incase of incorrect guess
-        if msg.content.startswith('That is the wrong') and msg.author.id == 716390085896962058:
-            print(f"Incorrect guess, falling back to hint")
+        if msg.content.startswith('That is the wrong') and msg.author.id == BOT_AUTHOR_ID:
+            logger.info("Incorrect guess, falling back to hint")
             await msg.channel.send(f'<@716390085896962058> h')
 
 
         # react function
-        if msg.author.id == config.OwnerId and msg.guild.id == config.GuildId:
+        if in_owner_scope(msg):
             if '!react' in message:
                 reactionpattern = r"!react (\d*) (.*)"
                 temp = re.search(reactionpattern, message)
                 if temp:
                     messageId = temp.group(1)
                     emoji = temp.group(2)
-                    
 
-    except Exception as e:
-        print(f"General error: {e}")
-        pass
+    except (AttributeError, RuntimeError, ValueError) as e:
+        logger.exception("General runtime error in on_message: %s", e)
 
 bot.run(config.token)

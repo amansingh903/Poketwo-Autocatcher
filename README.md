@@ -24,7 +24,13 @@ This is a simple Discord self-bot designed to catch Pokémon on Poketwo 24/7 so 
     ```bash
     pip install -r requirements.txt
     ```
-3.  **Configure:** Add your token and channel IDs to `config.py`.
+3.  **Configure:** Set environment variables before launch:
+    - `DISCORD_TOKEN` (required)
+    - `OWNER_ID` (required)
+    - `GUILD_ID` (required)
+    - `CATCH_CHANNEL_ID` (required)
+    - `SPAM_CHANNEL_ID` (optional)
+    - `START_SLEEPING` (optional, default `false`)
 4.  **Launch:**
     ```bash
     python main.py
